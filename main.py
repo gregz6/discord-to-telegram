@@ -6,7 +6,6 @@ import os
 # --- CONFIG SECTION ---
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 DISCORD_CHANNEL_ID = int(os.environ["DISCORD_CHANNEL_ID"])
-
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
 # ----------------------
