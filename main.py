@@ -9,9 +9,16 @@ import discord.state
 original_parse_ready_supplemental = discord.state.ConnectionState.parse_ready_supplemental
 
 def patched_parse_ready_supplemental(self, data):
+    # Ensure pending_payments is a list, even if it comes in as None
     if data.get("pending_payments") is None:
         data["pending_payments"] = []
-    return original_parse_ready_supplemental(self, data)
+    try:
+        return original_parse_ready_supplemental(self, data)
+    except TypeError as e:
+        # Catch the error and bypass the payments processing
+        print("Caught TypeError in parse_ready_supplemental:", e)
+        self.pending_payments = {}
+        return None
 
 discord.state.ConnectionState.parse_ready_supplemental = patched_parse_ready_supplemental
 
@@ -30,7 +37,7 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         try:
-            # Process only messages from the target channel and ignore your own messages
+            # Only process messages from the target channel and ignore your own messages
             if message.channel.id != DISCORD_CHANNEL_ID or message.author.id == self.user.id:
                 return
 
