@@ -3,19 +3,6 @@ import asyncio
 from telegram import Bot
 import os
 
-# Monkey-patch for the pending_payments issue in discord.py-self
-from discord.state import ClientState
-
-original_parse_ready_supplemental = ClientState.parse_ready_supplemental
-
-def patched_parse_ready_supplemental(self, data):
-    # Replace None with an empty list for 'pending_payments'
-    if 'pending_payments' in data and data['pending_payments'] is None:
-        data['pending_payments'] = []
-    return original_parse_ready_supplemental(self, data)
-
-ClientState.parse_ready_supplemental = patched_parse_ready_supplemental
-
 # Load environment variables
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 DISCORD_CHANNEL_ID = int(os.environ["DISCORD_CHANNEL_ID"])
@@ -45,8 +32,20 @@ class MyClient(discord.Client):
                 if attachment.content_type and attachment.content_type.startswith("image/"):
                     await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
         except Exception as e:
-            # Log any errors during message processing to avoid crashing the bot
+            # Log any errors during message processing to avoid crashing
             print(f"Error processing message: {e}")
 
 client = MyClient()
+
+# Patch the client's connection method to handle pending_payments being None
+original_parse_ready_supplemental = client._connection.parse_ready_supplemental
+
+def patched_parse_ready_supplemental(self, data):
+    if 'pending_payments' in data and data['pending_payments'] is None:
+        data['pending_payments'] = []
+    return original_parse_ready_supplemental(data)
+
+# Bind our patched method to the client's connection
+client._connection.parse_ready_supplemental = patched_parse_ready_supplemental.__get__(client._connection)
+
 client.run(DISCORD_TOKEN)
