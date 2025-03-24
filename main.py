@@ -4,17 +4,17 @@ from telegram import Bot
 import os
 
 # Monkey-patch for the pending_payments issue in discord.py-self
-from discord.state import State as DiscordState
+from discord.state import ClientState
 
-original_parse_ready_supplemental = DiscordState.parse_ready_supplemental
+original_parse_ready_supplemental = ClientState.parse_ready_supplemental
 
 def patched_parse_ready_supplemental(self, data):
-    # Ensure 'pending_payments' is always iterable
+    # Replace None with an empty list for 'pending_payments'
     if 'pending_payments' in data and data['pending_payments'] is None:
         data['pending_payments'] = []
     return original_parse_ready_supplemental(self, data)
 
-DiscordState.parse_ready_supplemental = patched_parse_ready_supplemental
+ClientState.parse_ready_supplemental = patched_parse_ready_supplemental
 
 # Load environment variables
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
@@ -31,7 +31,7 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         try:
-            # Only process messages from the target channel and ignore your own messages
+            # Process only messages from the target channel and ignore your own messages
             if message.channel.id != DISCORD_CHANNEL_ID or message.author.id == self.user.id:
                 return
 
@@ -45,7 +45,7 @@ class MyClient(discord.Client):
                 if attachment.content_type and attachment.content_type.startswith("image/"):
                     await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
         except Exception as e:
-            # Log any errors during message processing to avoid crashing
+            # Log any errors during message processing to avoid crashing the bot
             print(f"Error processing message: {e}")
 
 client = MyClient()
