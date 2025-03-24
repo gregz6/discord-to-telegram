@@ -3,6 +3,19 @@ import asyncio
 from telegram import Bot
 import os
 
+# Patch discord.gateway.WSClient.received_message to fix the pending_payments issue
+import discord.gateway
+
+old_received_message = discord.gateway.WSClient.received_message
+
+async def patched_received_message(self, data):
+    # If 'pending_payments' is None, change it to an empty list
+    if isinstance(data, dict) and 'pending_payments' in data and data['pending_payments'] is None:
+        data['pending_payments'] = []
+    return await old_received_message(self, data)
+
+discord.gateway.WSClient.received_message = patched_received_message
+
 # Load environment variables
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 DISCORD_CHANNEL_ID = int(os.environ["DISCORD_CHANNEL_ID"])
@@ -18,7 +31,7 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         try:
-            # Process only messages from the target channel and ignore your own messages
+            # Only process messages from the target channel and ignore your own messages
             if message.channel.id != DISCORD_CHANNEL_ID or message.author.id == self.user.id:
                 return
 
@@ -36,16 +49,4 @@ class MyClient(discord.Client):
             print(f"Error processing message: {e}")
 
 client = MyClient()
-
-# Patch the client's connection method to handle pending_payments being None
-original_parse_ready_supplemental = client._connection.parse_ready_supplemental
-
-def patched_parse_ready_supplemental(self, data):
-    if 'pending_payments' in data and data['pending_payments'] is None:
-        data['pending_payments'] = []
-    return original_parse_ready_supplemental(data)
-
-# Bind our patched method to the client's connection
-client._connection.parse_ready_supplemental = patched_parse_ready_supplemental.__get__(client._connection)
-
 client.run(DISCORD_TOKEN)
