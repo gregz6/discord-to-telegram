@@ -3,18 +3,17 @@ import asyncio
 from telegram import Bot
 import os
 
-# Patch discord.gateway.WSClient.received_message to fix the pending_payments issue
-import discord.gateway
+# Patch the ConnectionState.parse_ready_supplemental method in discord.state
+import discord.state
 
-old_received_message = discord.gateway.WSClient.received_message
+original_parse_ready_supplemental = discord.state.ConnectionState.parse_ready_supplemental
 
-async def patched_received_message(self, data):
-    # If 'pending_payments' is None, change it to an empty list
-    if isinstance(data, dict) and 'pending_payments' in data and data['pending_payments'] is None:
-        data['pending_payments'] = []
-    return await old_received_message(self, data)
+def patched_parse_ready_supplemental(self, data):
+    if data.get("pending_payments") is None:
+        data["pending_payments"] = []
+    return original_parse_ready_supplemental(self, data)
 
-discord.gateway.WSClient.received_message = patched_received_message
+discord.state.ConnectionState.parse_ready_supplemental = patched_parse_ready_supplemental
 
 # Load environment variables
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
@@ -31,7 +30,7 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         try:
-            # Only process messages from the target channel and ignore your own messages
+            # Process only messages from the target channel and ignore your own messages
             if message.channel.id != DISCORD_CHANNEL_ID or message.author.id == self.user.id:
                 return
 
