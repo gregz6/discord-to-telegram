@@ -19,7 +19,7 @@ class MyClient(discord.Client):
     async def on_ready(self):
         print(f"✅ Logged in as {self.user}")
 
-    async def on_message(self, message):
+      async def on_message(self, message):
         if message.channel.id != DISCORD_CHANNEL_ID:
             return
 
@@ -32,9 +32,10 @@ class MyClient(discord.Client):
             await telegram_bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
         # Send image attachments (if any)
-        for attachment in message.attachments:
-            if attachment.content_type and attachment.content_type.startswith("image/"):
-                await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith("image/"):
+                    await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
 
 # Create and run client
 client = MyClient()
