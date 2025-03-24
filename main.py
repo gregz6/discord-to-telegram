@@ -3,13 +3,18 @@ import asyncio
 from telegram import Bot
 import os
 
+# --- CONFIG SECTION ---
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 DISCORD_CHANNEL_ID = int(os.environ["DISCORD_CHANNEL_ID"])
+
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
+# ----------------------
 
+# Telegram bot setup
 telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
+# Discord client setup (no intents needed)
 class MyClient(discord.Client):
     async def on_ready(self):
         print(f"✅ Logged in as {self.user}")
@@ -29,8 +34,5 @@ class MyClient(discord.Client):
             if attachment.content_type and attachment.content_type.startswith("image/"):
                 await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
 
-intents = discord.Intents.default()
-intents.message_content = True
-
-client = MyClient(intents=intents)
-client.run(DISCORD_TOKEN, bot=False)  # <<< IMPORTANT for self-bot
+client = MyClient()
+client.run(DISCORD_TOKEN)
