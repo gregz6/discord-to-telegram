@@ -30,9 +30,11 @@ class MyClient(discord.Client):
             msg = f"[{message.author.display_name}] {message.content}"
             await telegram_bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-        for attachment in message.attachments:
-            if attachment.content_type and attachment.content_type.startswith("image/"):
-                await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
+# Send image attachments (if any)
+if message.attachments:  # <- this prevents the crash
+    for attachment in message.attachments:
+        if attachment.content_type and attachment.content_type.startswith("image/"):
+            await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
 
 client = MyClient()
 client.run(DISCORD_TOKEN)
