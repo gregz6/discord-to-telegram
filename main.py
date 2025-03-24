@@ -36,11 +36,6 @@ class MyClient(discord.Client):
             if attachment.content_type and attachment.content_type.startswith("image/"):
                 await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
 
-# Send image attachments (if any)
-if message.attachments:  # <- this prevents the crash
-    for attachment in message.attachments:
-        if attachment.content_type and attachment.content_type.startswith("image/"):
-            await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
-
+# Create and run client
 client = MyClient()
 client.run(DISCORD_TOKEN)
