@@ -26,11 +26,12 @@ class MyClient(discord.Client):
         if message.author.id == self.user.id:
             return
 
+        # Send the text message (if there is any)
         if message.content:
             msg = f"[{message.author.display_name}] {message.content}"
             await telegram_bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-        # This part is new (for attachments like images)
+        # Send image attachments (if any)
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
                 await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
