@@ -20,10 +20,9 @@ class MyClient(discord.Client):
         print(f"Logged in as {self.user}")
         # Send a test message to Telegram to confirm the bot is online
         await telegram_bot.send_message(chat_id=TELEGRAM_CHAT_ID, text="Test message: Bot is online!")
-
+    
     async def on_message(self, message):
-        # Process messages only if they come from one of the target channels
-        # and ignore messages sent by yourself
+        # Check if message is from one of the target channels and ignore your own messages
         if message.channel.id not in DISCORD_CHANNEL_IDS or message.author.id == self.user.id:
             return
 
@@ -32,10 +31,17 @@ class MyClient(discord.Client):
             msg = f"[{message.author.display_name}] {message.content}"
             await telegram_bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-        # Forward image attachments
+        # Loop through attachments and print debug info
         for attachment in (message.attachments or []):
-            if attachment.content_type and attachment.content_type.startswith("image/"):
+            # Print debug information to your logs
+            print(f"DEBUG: attachment filename={attachment.filename}, content_type={attachment.content_type}")
+
+            # If the attachment is labeled as an image, send as a photo
+            if attachment.content_type and "image" in attachment.content_type:
                 await telegram_bot.send_photo(chat_id=TELEGRAM_CHAT_ID, photo=attachment.url)
+            else:
+                # Otherwise, send it as a document (fallback)
+                await telegram_bot.send_document(chat_id=TELEGRAM_CHAT_ID, document=attachment.url)
 
 client = MyClient()
 client.run(DISCORD_TOKEN)
